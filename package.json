@@ -1,0 +1,20 @@
+{
+  "name": "stripe_repro",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "cross-env node --import tsx --test-reporter spec --test \"stripe_identity_test.ts\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "stripe": "^16.12.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "puppeteer": "^23.4.1",
+    "tsx": "^4.19.1"
+  }
+}

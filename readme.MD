@@ -9,5 +9,5 @@ This repository showcase the issue by providing a minimal reproduction scenario
 
 ## How to reproduce issue
 
-  1. Add your secret key in stripe_client.ts
+  1. Add your secret key from stripe test mode dashboard in stripe_client.ts
   2. run `npm run test`

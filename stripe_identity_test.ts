@@ -4,6 +4,7 @@ import puppeteer from 'puppeteer';
 import Stripe from 'stripe';
 import { OnIdentityVerificationCompleted } from './on_identity_verification_completed_handler';
 import { stripeClient } from './stripe_client';
+import { randomUUID } from 'node:crypto';
 
 
 // integration test for identity verification
@@ -26,10 +27,38 @@ describe('UpdateStripeOnAccountUpdated', { timeout: 60000 }, () => {
   // helpers
   async function createVerificationSession() {
     const customer = await stripeClient.customers.create({});
-    const connectAccount = await stripeClient.accounts.create({});
+    const connectAccount = await stripeClient.accounts.create({
+      controller: {
+        stripe_dashboard: { type: 'none' },
+        fees: { payer: 'application' },
+        losses: { payments: 'application' },
+        requirement_collection: 'application',
+
+      },
+      // when an account has negative balance (refunds, etc), it will automatically 
+      // debit it from the external bank account
+      settings: {
+        payouts: {
+          debit_negative_balances: true,
+          schedule: { monthly_anchor: 1, interval: 'monthly' },
+        },
+      },
+      capabilities: { transfers: { requested: true }, card_payments: { requested: true } },
+      business_profile: {
+        url: `https://some-app.com/profiles/${randomUUID()}`,
+        mcc: '7011',
+      },
+      tos_acceptance: {
+        date: Math.round(Date.now() / 1000),
+        ip: '192.158.1.38',
+      },
+      business_type: 'individual',
+    });
     const person = await stripeClient.accounts.createPerson(connectAccount.id, {
       first_name: 'test',
-      last_name: 'doe', // todo should we create customer
+      last_name: 'doe',
+      relationship: { representative: true, executive: true, }
+
     });
 
     // create verification session
@@ -47,6 +76,11 @@ describe('UpdateStripeOnAccountUpdated', { timeout: 60000 }, () => {
         },
       },
     });
+
+    console.log(`created connect account with id: ${connectAccount.id} `);
+    console.log(`created person with id: ${person.id} `);
+    console.log(`created customer with id: ${customer.id} `);
+    console.log(`created verification with id: ${verificationSession.id} `);
 
     return { verificationSession, connectId: connectAccount.id, personId: person.id };
   }
